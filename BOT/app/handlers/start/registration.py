@@ -5,6 +5,7 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
+from ThrottlingMiddleware import ThrottlingMiddleware
 from app.handlers.start.filter import IsTrueContact
 from app.handlers.start.keyboard import sent_contact_kb
 from app.handlers.start.state import UserRegistration
@@ -12,8 +13,8 @@ from database.TelegramUser.crud import TelegramUserCRUD
 from database.AccessList.crud import AccessListCRUD
 from database.TelegramUser.model import TelegramUser
 
-registration = Router()
 start = Router()
+start.message.middleware(ThrottlingMiddleware(limit=10))
 
 
 @start.message(CommandStart())
@@ -44,4 +45,4 @@ async def get_user_contact(message: Message, state: FSMContext):
 
 def register_start_handlers(dp):
     dp.include_router(start)
-    dp.include_router(registration)
+
