@@ -33,3 +33,13 @@ class BaseCRUD:
             result = await session.execute(query)
             logger.info(f"{cls} find_all {filter_by} : {result}")
             return result.scalars().all()
+
+    @classmethod
+    async def create(cls, **filter_by):
+        async with db.Session() as session:
+            new_row = cls.model(**filter_by)
+            session.add(new_row)
+            await session.commit()
+            await session.refresh(new_row)
+            logger.info(f"Пользователь успешно зарегистрирован {filter_by}")
+            return new_row
