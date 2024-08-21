@@ -25,7 +25,6 @@ class DataBase:
 
     async def create_db(self):
         logger.info("Создаются таблицы")
-
         async with self.async_engine.begin() as connect:
             await connect.run_sync(Base.metadata.create_all)
         logger.info("Таблицы созданы")
