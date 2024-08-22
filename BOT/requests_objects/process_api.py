@@ -1,6 +1,7 @@
 from typing import Dict, Any, Optional
 
-from objects_requests.base_class import GetRequests
+from requests_objects import api_client
+from requests_objects.base_class import GetRequests
 
 
 class ProcessApi(GetRequests):
@@ -18,3 +19,7 @@ class ProcessApi(GetRequests):
         except Exception as e:
             print(e)
             return None
+
+
+process_api = ProcessApi(api_client)
+
