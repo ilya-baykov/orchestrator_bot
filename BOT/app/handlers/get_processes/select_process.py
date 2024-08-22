@@ -38,7 +38,7 @@ async def search_process(message: Message, state: FSMContext):
         else:
             matches = process_searcher.get_similar()  # Поиск похожих процессов
             if matches:
-                await message.answer("Возможно, вы имели в виду:", '\n'.join(matches))
+                await message.answer(f"Возможно, вы имели в виду: {str(matches)}")
             else:
                 await message.answer("Такие процессы не найдены.")
 

@@ -16,7 +16,7 @@ class ProcessSearcher:
     async def create(cls, input_process: str):
         instance = cls(input_process)
         instance.processes_objects = await OrchestratorProcessBD.get_processes_objects()
-        instance.similar_processes = await OrchestratorProcessBD.get_all_process_names()
+        instance.all_process_names = await OrchestratorProcessBD.get_all_process_names()
         return instance
 
     def get_processes_by_prefix(self):
@@ -27,5 +27,5 @@ class ProcessSearcher:
         all_names = {prefix_name.split("_")[0] for prefix_name in self.all_process_names}  # Все имена процессов
         matches = get_close_matches(self.input_prefix, all_names, n=10, cutoff=0.8)  # Поиск наиболее похожих
         if matches:
-            return (match.upper() for match in matches)
+            return [match.upper() for match in matches]
         return None
