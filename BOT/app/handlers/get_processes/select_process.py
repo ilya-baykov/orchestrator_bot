@@ -9,6 +9,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
 from app.handlers.get_processes.state import OrchestratorProcessState
+from app.handlers.get_processes.utility import ProcessSearcher
 from app.support_objects import OrchestratorProcessBD, OrchestratorProcess
 from database.OrchestratorProcess.crud import OrchestratorProcessCRUD
 from requests_objects.process_api import process_api
@@ -20,30 +21,24 @@ orchestrator_process = Router()
 
 @orchestrator_process.message(Command('get_process_info'))
 async def select_processor(message: Message, state: FSMContext):
-    await state.set_state(OrchestratorProcessState.input_process)
+    await state.set_state(OrchestratorProcessState.input_process_prefix)
     await message.answer("Введите название процесса, по которому хотите получить информацию")
 
 
-@orchestrator_process.message(OrchestratorProcessState.input_process)
+@orchestrator_process.message(OrchestratorProcessState.input_process_prefix)
 async def search_process(message: Message, state: FSMContext):
     try:
-        # Получаем объекты процессов из базы данных
-        processes_objects: List[OrchestratorProcess] = await OrchestratorProcessBD.get_processes_objects()
-        input_process_prefix = message.text.lower().split("_")[0]  # Извлекаем префикс введённого процесса
 
-        # Подходящие по префиксу имена процессов
-        processes_names = [processes.name.upper() for processes in processes_objects if
-                           input_process_prefix == processes.name.split("_")[0]]
+        process_searcher = await ProcessSearcher.create(message.text)  # Создаем объект ProcessSearcher
+        processes_names = process_searcher.get_processes_by_prefix()  # Получаем имена процессов по префиксу
 
-        if processes_names:
+        if processes_names:  # Если такой префикс найден среди процессов - возвращаем имена процессов с таким же префиксом
             await message.answer(str(processes_names))
+            await state.set_state(OrchestratorProcessState.input_current_process)
         else:
-            all_names = {prefix_name.split("_")[0] for prefix_name in
-                         await OrchestratorProcessBD.get_all_process_names()}  # Все имена процессов
-            matches = get_close_matches(input_process_prefix, all_names, n=10, cutoff=0.8)  # Поиск наиболее похожих
+            matches = process_searcher.get_similar()  # Поиск похожих процессов
             if matches:
-                matches = '\n'.join(match.upper() for match in matches)
-                await message.answer(f"Возможно, вы имели в виду:\n{matches}")
+                await message.answer("Возможно, вы имели в виду:", '\n'.join(matches))
             else:
                 await message.answer("Такие процессы не найдены.")
 
