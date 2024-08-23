@@ -5,19 +5,19 @@ from database.UserInput.crud import UserInputCRUD
 
 
 @dataclass
-class OrchestratorProcess:
+class UserInputData:
     name: str
     guid: str
 
 
-class OrchestratorProcessBD:
-    __processes_objects: List[OrchestratorProcess] = None
+class UserInputDb:
+    __processes_objects: List[UserInputData] = None
 
     @classmethod
-    async def get_processes_objects(cls) -> List[OrchestratorProcess]:
+    async def get_processes_objects(cls, **fileter) -> List[UserInputData]:
         if cls.__processes_objects is None:
-            processes = await UserInputCRUD.find_all()
-            cls.__processes_objects = [OrchestratorProcess(name=process.process_name, guid=process.process_guid) for
+            processes = await UserInputCRUD.find_all(**fileter)
+            cls.__processes_objects = [UserInputData(name=process.subprocess_name, guid=process.subprocess_guid) for
                                        process in processes]
         return cls.__processes_objects
 

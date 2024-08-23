@@ -1,7 +1,8 @@
 from difflib import get_close_matches
 from typing import List
 
-from app.support_objects import OrchestratorProcess, OrchestratorProcessBD
+from app.support_objects import UserInputDb
+from database.TelegramUser.crud import TelegramUserCRUD
 
 
 class ProcessSearcher:
@@ -10,13 +11,14 @@ class ProcessSearcher:
 
     def __init__(self, input_process: str):
         self.input_process = input_process
-        self.input_prefix = input_process.lower().split("_")[0]
+        self.input_prefix = input_process.upper().split("_")[0]
 
     @classmethod
-    async def create(cls, input_process: str):
+    async def create(cls, input_process: str, telegram_id: str):
         instance = cls(input_process)
-        instance.processes_objects = await OrchestratorProcessBD.get_processes_objects()
-        instance.all_process_names = await OrchestratorProcessBD.get_all_process_names()
+        department_access = await TelegramUserCRUD.get_department_by_telegram_id(telegram_id)
+        instance.processes_objects = await UserInputDb.get_processes_objects(department_access=department_access)
+        instance.all_process_names = await UserInputDb.get_all_process_names()
         return instance
 
     def get_processes_by_prefix(self):

@@ -24,7 +24,8 @@ async def select_processor(message: Message, state: FSMContext):
 async def search_process(message: Message, state: FSMContext):
     try:
 
-        process_searcher = await ProcessSearcher.create(message.text)  # Создаем объект ProcessSearcher
+        process_searcher = await ProcessSearcher.create(input_process=message.text,
+                                                        telegram_id=str(message.from_user.id))
         processes_names = process_searcher.get_processes_by_prefix()  # Получаем имена процессов по префиксу
 
         if processes_names:  # Если такой префикс найден среди процессов - возвращаем имена процессов с таким же префиксом
