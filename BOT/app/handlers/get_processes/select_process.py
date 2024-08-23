@@ -1,7 +1,4 @@
 import logging
-from dataclasses import dataclass
-from difflib import get_close_matches
-from typing import List, Dict
 
 from aiogram import Router, F
 from aiogram.filters import Command
@@ -10,16 +7,14 @@ from aiogram.types import Message
 
 from app.handlers.get_processes.state import OrchestratorProcessState
 from app.handlers.get_processes.utility import ProcessSearcher
-from app.support_objects import OrchestratorProcessBD, OrchestratorProcess
-from database.OrchestratorProcess.crud import OrchestratorProcessCRUD
-from requests_objects.process_api import process_api
+from global_filter import RegisteredUser
 
 logger = logging.getLogger(__name__)
 
 orchestrator_process = Router()
 
 
-@orchestrator_process.message(Command('get_process_info'))
+@orchestrator_process.message(RegisteredUser(), Command('get_process_info'))
 async def select_processor(message: Message, state: FSMContext):
     await state.set_state(OrchestratorProcessState.input_process_prefix)
     await message.answer("Введите название процесса, по которому хотите получить информацию")
