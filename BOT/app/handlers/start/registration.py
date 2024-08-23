@@ -5,7 +5,7 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from ThrottlingMiddleware import ThrottlingMiddleware
+from throttling_middleware import ThrottlingMiddleware
 from app.handlers.start.filter import IsTrueContact
 from app.handlers.start.keyboard import sent_contact_kb
 from app.handlers.start.state import UserRegistration
@@ -14,7 +14,7 @@ from database.AccessList.crud import AccessListCRUD
 from database.TelegramUser.model import TelegramUser
 
 start = Router()
-start.message.middleware(ThrottlingMiddleware(limit=10))
+start.message.middleware(ThrottlingMiddleware(limit=2))
 
 
 @start.message(CommandStart())
@@ -36,7 +36,7 @@ async def get_user_contact(message: Message, state: FSMContext):
     access_employee = await AccessListCRUD.find_one_or_none(phone=str(phone_number))
     if access_employee:
         await TelegramUserCRUD.create(telegram_username=message.from_user.username,
-                                      telegram_id=str(message.from_user.id))
+                                      telegram_id=str(message.from_user.id), access_list_id=access_employee.id)
         await message.answer(f"{access_employee.fullname}, вы успешно зарегистрировались в этом чат-боте")
     else:
         await message.answer("Извините, для вас нет доступа к функционалу этого бота")
@@ -45,4 +45,3 @@ async def get_user_contact(message: Message, state: FSMContext):
 
 def register_start_handlers(dp):
     dp.include_router(start)
-

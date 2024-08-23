@@ -1,16 +1,13 @@
 import asyncio
 import platform
-from aiogram import Bot
 from app.bot_running import start_bot
-from database.TelegramUser.crud import TelegramUserCRUD
 from database.core import db
 from logger_settings import setup_logger
 
 
 async def main():
     # await db.reset_database()
-    # await db.create_db()
-
+    await db.create_db()
     await start_bot()
 
 
