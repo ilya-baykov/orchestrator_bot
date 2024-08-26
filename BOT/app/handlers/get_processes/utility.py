@@ -1,5 +1,7 @@
 from difflib import get_close_matches
-from typing import List
+from typing import List, Optional, Dict
+
+from pydantic import BaseModel
 
 from database.TelegramUser.crud import TelegramUserCRUD
 from database.UserInput.crud import UserInputCRUD
@@ -41,3 +43,27 @@ class ProcessSearcher:
         """
         all_names = {process.process_name.upper() for process in processes}
         return get_close_matches(search_text.upper(), all_names, n=10, cutoff=0.7)
+
+
+# Определяем модель для параметров
+class Parameters(BaseModel):
+    type: int
+    text: Dict[str, str]
+
+
+# Определяем основную модель для задачи
+class TaskItem(BaseModel):
+    id: str
+    guid: str
+    name: str
+    description: Optional[str]
+    status: str
+    parameters: Parameters
+    created: str
+    updated: str
+    postponed: Optional[str]
+    priority: str
+    deadline: Optional[str]
+    comment: Optional[str]
+    tags: str
+    retries: str

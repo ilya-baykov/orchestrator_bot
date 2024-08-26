@@ -1,7 +1,8 @@
 import json
 from typing import Dict, Any, Optional
+from requests_objects.api_client import api_client
 
-from objects_requests.base_class import GetRequests
+from requests_objects.base_class import GetRequests
 
 
 class TasksApi(GetRequests):
@@ -60,3 +61,6 @@ class TasksApi(GetRequests):
         except Exception as e:
             print(e)
             return None
+
+
+tasks_api = TasksApi(api_client)

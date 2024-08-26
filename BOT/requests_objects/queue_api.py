@@ -1,6 +1,7 @@
 from typing import Dict, Any, Optional
 
-from objects_requests.base_class import GetRequests
+from requests_objects import api_client
+from requests_objects.base_class import GetRequests
 
 
 class QueuesApi(GetRequests):
@@ -12,7 +13,9 @@ class QueuesApi(GetRequests):
         :param guid: Уникальный идентификатор очереди.
         :return: Данные о процессе в формате JSON.
         """
+
         endpoint = f"/api/queue/read/{guid}"
+        endpoint = f"/api/queue/read/RPA031_Reporter"
         try:
             return self.api_client.get(endpoint)
         except Exception as e:

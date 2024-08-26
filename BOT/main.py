@@ -1,5 +1,8 @@
 import asyncio
 import platform
+
+import urllib3
+
 from app.bot_running import start_bot
 from database.core import db
 from logger_settings import setup_logger
@@ -14,6 +17,7 @@ async def main():
 if __name__ == '__main__':
     print("Бот запущен")
     logger = setup_logger()
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
     try:
         # Установите политику цикла событий для Windows
         if platform.system() == 'Windows':

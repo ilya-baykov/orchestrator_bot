@@ -42,4 +42,4 @@ class ApiClient:
             raise Exception(f"Error: {response.status_code}, {response.text}")
 
 
-app_client = ApiClient("https://zbx.rpa.rt.ru")
+api_client = ApiClient("https://zbx.rpa.rt.ru")
