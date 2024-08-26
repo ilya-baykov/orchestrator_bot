@@ -1,11 +1,14 @@
 import json
+import logging
 from difflib import get_close_matches
 from typing import List, Optional, Dict
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from database.TelegramUser.crud import TelegramUserCRUD
 from database.UserInput.crud import UserInputCRUD
+
+logger = logging.getLogger(__name__)
 
 
 # Определяем модель для параметров
@@ -21,15 +24,15 @@ class TaskItem(BaseModel):
     name: str
     description: Optional[str]
     status: str
-    parameters: Parameters
+    parameters: Optional[Parameters]
     created: str
     updated: str
     postponed: Optional[str]
     priority: str
     deadline: Optional[str]
     comment: Optional[str]
-    tags: str
-    retries: str
+    tags: Optional[str]
+    retries: Optional[str]
 
 
 class ProcessSearcher:
@@ -80,7 +83,10 @@ class TaskService:
         for row in raw_tasks:
             if isinstance(row['parameters'], str):
                 row['parameters'] = json.loads(row['parameters'])
-            tasks.append(TaskItem(**row))  # Создаем экземпляр TaskItem
+            try:
+                tasks.append(TaskItem(**row))  # Создаем экземпляр TaskItem
+            except ValidationError as e:
+                logger.error(f"Ошибка валидации : {row}, {e}")
         return tasks
 
 
