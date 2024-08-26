@@ -9,7 +9,7 @@ from aiogram.types import Message, CallbackQuery
 
 from app.handlers.get_processes.keyboard import create_inline_kb, ProcessInfo
 from app.handlers.get_processes.state import OrchestratorProcessState
-from app.handlers.get_processes.utility import ProcessSearcher, TaskItem
+from app.handlers.get_processes.utility import ProcessSearcher, TaskItem, TaskReport, TaskService
 from global_filter import RegisteredUser
 from requests_objects.tasks_api import tasks_api
 
@@ -51,23 +51,19 @@ async def choose_process(callback_query: CallbackQuery, callback_data: ProcessIn
     print(callback_data)
     await callback_query.answer(str(callback_data))
     try:
-        success_tasks = tasks_api.get_filter_list_request(guid_queue=callback_data.queue_guid, filters={"status": 2})
-        application_failed_tasks = tasks_api.get_filter_list_request(guid_queue=callback_data.queue_guid,
-                                                                     filters={"status": 3})
-        business_failed_tasks = tasks_api.get_filter_list_request(guid_queue=callback_data.queue_guid,
-                                                                  filters={"status": 4})
-        print(len(success_tasks))
-        # Проходим по каждому элементу в списке
-        for row in success_tasks:
+        task_service = TaskService(tasks_api)  # Инициализируем TaskService
 
-            if isinstance(row['parameters'], str):  # Декодируем параметры, если они в виде строки
-                row['parameters'] = json.loads(row['parameters'])
+        # Получаем задачи
+        success_tasks = task_service.get_tasks(callback_data.queue_guid, status=2)
+        application_failed_tasks = task_service.get_tasks(callback_data.queue_guid, status=3)
+        business_failed_tasks = task_service.get_tasks(callback_data.queue_guid, status=4)
+        in_progress_tasks = task_service.get_tasks(callback_data.queue_guid, status=1)
 
-            # Создаем экземпляр модели
-            task_item = TaskItem(**row)
-
-            print(f"ID: {task_item.id}, Имя: {task_item.name}, Время создания: {task_item.created}")
-        await callback_query.message.answer("Успешно")
+        # Генерируем отчет
+        task_report = TaskReport(in_progress_tasks, success_tasks, application_failed_tasks, business_failed_tasks)
+        message = task_report.generate_report()
+        print(message)
+        await callback_query.message.answer(message)
     except Exception as e:
         logger.error(f"При попытке получить информацию из очереди произошла ошибка: {e}")
         await callback_query.message.answer("Произошла неизвестная ошибка")
