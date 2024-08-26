@@ -78,7 +78,9 @@ class TaskService:
         self.tasks_api = tasks_api
 
     def get_tasks(self, queue_guid: str, status: int) -> List[TaskItem]:
-        raw_tasks = self.tasks_api.get_filter_list_request(guid_queue=queue_guid, filters={"status": status})
+        unix_time = "1724533200.0"
+        raw_tasks = self.tasks_api.get_filter_list_request(guid_queue=queue_guid,
+                                                           filters={"status": status, "createdLater": unix_time})
         tasks = []
         for row in raw_tasks:
             if isinstance(row['parameters'], str):

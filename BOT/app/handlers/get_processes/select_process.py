@@ -1,13 +1,11 @@
-import json
 import logging
-from datetime import datetime
 
 from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
-from app.handlers.get_processes.keyboard import create_inline_kb, ProcessInfo
+from app.handlers.get_processes.keyboard import create_inline_kb, ProcessInfo, period_selection_kb
 from app.handlers.get_processes.state import OrchestratorProcessState
 from app.handlers.get_processes.utility import ProcessSearcher, TaskItem, TaskReport, TaskService
 from global_filter import RegisteredUser
@@ -46,9 +44,11 @@ async def search_process(message: Message, state: FSMContext):
         logger.error(f"При попытке найти нужные процессы по префиксу произошла ошибка: {e}")
 
 
-@orchestrator_process.callback_query(ProcessInfo.filter())
-async def choose_process(callback_query: CallbackQuery, callback_data: ProcessInfo, state: FSMContext):
-    await callback_query.answer(str(callback_data))
+@orchestrator_process.message(OrchestratorProcessState.input_current_process,
+                              F.text.in_({"За текущий час", "За текущий день", "За текущий год"}))
+async def get_report_message(message: Message, state: FSMContext):
+    state_data = await state.get_data()
+    callback_data = state_data.get("callback_data")
     try:
         task_service = TaskService(tasks_api)  # Инициализируем TaskService
         success_tasks = task_service.get_tasks(callback_data.queue_guid, status=2)  # Получаем задачи
@@ -58,11 +58,18 @@ async def choose_process(callback_query: CallbackQuery, callback_data: ProcessIn
 
         # Генерируем отчет
         task_report = TaskReport(in_progress_tasks, success_tasks, application_failed_tasks, business_failed_tasks)
-        message = task_report.generate_report()
-        await callback_query.message.answer(message)
+        report_message = task_report.generate_report()
+        await message.answer(report_message)
     except Exception as e:
         logger.error(f"При попытке получить информацию из очереди произошла ошибка: {e}")
-        await callback_query.message.answer("Произошла неизвестная ошибка")
+        await message.answer("Произошла неизвестная ошибка")
+
+
+@orchestrator_process.callback_query(ProcessInfo.filter())
+async def choose_process(callback_query: CallbackQuery, callback_data: ProcessInfo, state: FSMContext):
+    await callback_query.message.answer("Выберите нужный период", reply_markup=period_selection_kb)
+    await state.update_data({"callback_data": callback_data})
+    await callback_query.answer(str(callback_data))
 
 
 def register_orchestrator_process_handlers(dp):
