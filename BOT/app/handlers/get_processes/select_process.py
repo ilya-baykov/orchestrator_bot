@@ -48,21 +48,17 @@ async def search_process(message: Message, state: FSMContext):
 
 @orchestrator_process.callback_query(ProcessInfo.filter())
 async def choose_process(callback_query: CallbackQuery, callback_data: ProcessInfo, state: FSMContext):
-    print(callback_data)
     await callback_query.answer(str(callback_data))
     try:
         task_service = TaskService(tasks_api)  # Инициализируем TaskService
-
-        # Получаем задачи
-        success_tasks = task_service.get_tasks(callback_data.queue_guid, status=2)
-        application_failed_tasks = task_service.get_tasks(callback_data.queue_guid, status=3)
-        business_failed_tasks = task_service.get_tasks(callback_data.queue_guid, status=4)
-        in_progress_tasks = task_service.get_tasks(callback_data.queue_guid, status=1)
+        success_tasks = task_service.get_tasks(callback_data.queue_guid, status=2)  # Получаем задачи
+        application_failed_tasks = task_service.get_tasks(callback_data.queue_guid, status=3)  # Получаем задачи
+        business_failed_tasks = task_service.get_tasks(callback_data.queue_guid, status=4)  # Получаем задачи
+        in_progress_tasks = task_service.get_tasks(callback_data.queue_guid, status=1)  # Получаем задачи
 
         # Генерируем отчет
         task_report = TaskReport(in_progress_tasks, success_tasks, application_failed_tasks, business_failed_tasks)
         message = task_report.generate_report()
-        print(message)
         await callback_query.message.answer(message)
     except Exception as e:
         logger.error(f"При попытке получить информацию из очереди произошла ошибка: {e}")

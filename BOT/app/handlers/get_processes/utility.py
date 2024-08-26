@@ -109,7 +109,8 @@ class TaskReport:
         return section
 
     def generate_report(self) -> str:
-        report = f"Количество успешных задач: {len(self.success_tasks)}\n"
+        report = f"Количество задач в процессе выполнения: {len(self.in_progress_tasks)}\n"
+        report += f"Количество успешных задач: {len(self.success_tasks)}\n"
         report += f"Количество задач с ошибками приложения: {len(self.application_failed_tasks)}\n"
         report += f"Количество задач с ошибками бизнеса: {len(self.business_failed_tasks)}\n\n"
 
