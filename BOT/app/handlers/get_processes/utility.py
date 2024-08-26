@@ -77,8 +77,7 @@ class TaskService:
     def __init__(self, tasks_api):
         self.tasks_api = tasks_api
 
-    def get_tasks(self, queue_guid: str, status: int) -> List[TaskItem]:
-        unix_time = "1724533200.0"
+    def get_tasks(self, queue_guid: str, status: int, unix_time: str) -> List[TaskItem]:
         raw_tasks = self.tasks_api.get_filter_list_request(guid_queue=queue_guid,
                                                            filters={"status": status, "createdLater": unix_time})
         tasks = []

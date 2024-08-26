@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timedelta
 
 from aiogram import Router, F
 from aiogram.filters import Command
@@ -49,12 +50,26 @@ async def search_process(message: Message, state: FSMContext):
 async def get_report_message(message: Message, state: FSMContext):
     state_data = await state.get_data()
     callback_data = state_data.get("callback_data")
+
+    # Получаем текущее время в формате Unix
+    current_time = int(datetime.now().timestamp())
+    unix_time = None
+    if message.text == "За текущий час":
+        unix_time = str((datetime.now() - timedelta(hours=1)).timestamp())
+    elif message.text == "За текущий день":
+        unix_time = str((datetime.now() - timedelta(days=1)).timestamp())
+    elif message.text == "За текущий год":
+        unix_time = str((datetime.now() - timedelta(days=365)).timestamp())
     try:
         task_service = TaskService(tasks_api)  # Инициализируем TaskService
-        success_tasks = task_service.get_tasks(callback_data.queue_guid, status=2)  # Получаем задачи
-        application_failed_tasks = task_service.get_tasks(callback_data.queue_guid, status=3)  # Получаем задачи
-        business_failed_tasks = task_service.get_tasks(callback_data.queue_guid, status=4)  # Получаем задачи
-        in_progress_tasks = task_service.get_tasks(callback_data.queue_guid, status=1)  # Получаем задачи
+        success_tasks = task_service.get_tasks(callback_data.queue_guid, status=2,
+                                               unix_time=unix_time)  # Получаем задачи
+        application_failed_tasks = task_service.get_tasks(callback_data.queue_guid, status=3,
+                                                          unix_time=unix_time)  # Получаем задачи
+        business_failed_tasks = task_service.get_tasks(callback_data.queue_guid, status=4,
+                                                       unix_time=unix_time)  # Получаем задачи
+        in_progress_tasks = task_service.get_tasks(callback_data.queue_guid, status=1,
+                                                   unix_time=unix_time)  # Получаем задачи
 
         # Генерируем отчет
         task_report = TaskReport(in_progress_tasks, success_tasks, application_failed_tasks, business_failed_tasks)
