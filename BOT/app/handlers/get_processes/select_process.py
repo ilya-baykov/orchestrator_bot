@@ -33,8 +33,9 @@ async def search_process(message: Message, state: FSMContext):
         suitable_processes = ProcessSearcher.get_suitable_processes(processes, message.text)  # Подходящие процессы
 
         if suitable_processes:
-            await message.answer(text="Выберите нужный этап", reply_markup=await display_mode_selection_keyboard())
+            await message.answer(text="Хотите посмотреть все этапы или какой-то конкретный ?", reply_markup=await display_mode_selection_keyboard())
             await state.set_state(OrchestratorProcessState.input_current_process)
+            await state.update_data({"suitable_processes": suitable_processes})
         else:
             matches = ProcessSearcher.get_close_matches(processes, message.text)  # Похожие по префиксу названия
             if matches:
@@ -71,13 +72,15 @@ async def get_report_message(message: Message, state: FSMContext):
 @orchestrator_process.callback_query(F.data.in_(['all_stages', 'specific_stage']))
 async def handle_stage_selection(callback_query: CallbackQuery, state: FSMContext):
     await callback_query.answer()  # Подтверждаем нажатие кнопки
-
+    state_data: dict = await state.get_data()
+    suitable_processes = state_data.get("suitable_processes", [])
     if callback_query.data == 'all_stages':
         await callback_query.message.answer("Вы выбрали все этапы.")
         # Здесь можно добавить логику для обработки выбора "Все этапы"
     elif callback_query.data == 'specific_stage':
-        await callback_query.message.answer("Вы выбрали конкретный этап.")
-        # Здесь можно добавить логику для обработки выбора "Конкретный этап"
+        await callback_query.message.answer("Выберите интересующий вас этап",
+                                            reply_markup=await stage_selection_kb(
+                                                suitable_processes=suitable_processes))
 
 
 @orchestrator_process.callback_query(ProcessInfo.filter())
