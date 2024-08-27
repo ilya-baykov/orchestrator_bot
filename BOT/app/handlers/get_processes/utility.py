@@ -1,12 +1,14 @@
 import json
 import logging
+from datetime import datetime, timedelta
 from difflib import get_close_matches
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 
 from pydantic import BaseModel, ValidationError
 
 from database.TelegramUser.crud import TelegramUserCRUD
 from database.UserInput.crud import UserInputCRUD
+from requests_objects.tasks_api import TasksApi
 
 logger = logging.getLogger(__name__)
 
@@ -74,10 +76,33 @@ class ProcessSearcher:
 
 
 class TaskService:
-    def __init__(self, tasks_api):
+    def __init__(self, tasks_api: TasksApi, period: str):
+        """
+        :param tasks_api: Объект класса для формирования запроса к Оркестратору для получения информации по задачам
+        :param period: Интересующий пользователя период (фильтрация по времени)
+        """
         self.tasks_api = tasks_api
+        self.period = period
 
-    def get_tasks(self, queue_guid: str, status: int, unix_time: str) -> List[TaskItem]:
+    def _unix_time(self) -> str:
+        """Формирует время в формате unix со смещением на нужный период"""
+        if self.period == "За текущий час":
+            return str((datetime.now() - timedelta(hours=1)).timestamp())
+        elif self.period == "За текущий день":
+            return str((datetime.now() - timedelta(days=1)).timestamp())
+        elif self.period == "За текущий год":
+            return str((datetime.now() - timedelta(days=365)).timestamp())
+        else:
+            raise Exception
+
+    def get_tasks(self, queue_guid: str, status: int) -> List[TaskItem]:
+        """
+        Получает список отфильтрованных по времени и статусу задач из Оркестратора
+        :param queue_guid: Гуид Очереди
+        :param status: Интересующий статус процессов
+        :return: Список задач в формате TaskItem
+        """
+        unix_time = self._unix_time()
         raw_tasks = self.tasks_api.get_filter_list_request(guid_queue=queue_guid,
                                                            filters={"status": status, "createdLater": unix_time})
         tasks = []
@@ -92,6 +117,8 @@ class TaskService:
 
 
 class TaskReport:
+    """Класс для формирования отчётного сообщения пользователю"""
+
     def __init__(self, in_progress_tasks: List[TaskItem], success_tasks: List[TaskItem],
                  application_failed_tasks: List[TaskItem],
                  business_failed_tasks: List[TaskItem]):
@@ -102,12 +129,13 @@ class TaskReport:
 
     @staticmethod
     def _generate_task_section(title: str, tasks: List[TaskItem], status: str) -> str:
+        """Формирует строку в сообщения для конкретного статуса процесса"""
         if not tasks:
             return ""
 
         section = f"\n{title}:\n"
         for task in tasks:
-            if isinstance(task, TaskItem):  # Проверка типа
+            if isinstance(task, TaskItem):
                 section += (f"ID: {task.id}, Имя: {task.name},\n"
                             f"Время создания: {task.created},\n"
                             f"Статус: {status}\n\n")
@@ -116,6 +144,7 @@ class TaskReport:
         return section
 
     def generate_report(self) -> str:
+        """Формирует общий отчёт по этапу процесса"""
         report = f"Количество задач в процессе выполнения: {len(self.in_progress_tasks)}\n"
         report += f"Количество успешных задач: {len(self.success_tasks)}\n"
         report += f"Количество задач с ошибками приложения: {len(self.application_failed_tasks)}\n"

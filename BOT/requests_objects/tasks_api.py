@@ -1,5 +1,5 @@
 import json
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 from requests_objects.api_client import api_client
 
 from requests_objects.base_class import GetRequests
@@ -41,7 +41,7 @@ class TasksApi(GetRequests):
             return None
 
     def get_filter_list_request(self, guid_queue: str,
-                                filters: Optional[dict[str, str]] = None) -> Optional[Dict[str, Any]]:
+                                filters: Optional[dict[str, str]] = None) -> List[Optional[Dict[str, Any]]]:
 
         """
         Получение данных о нескольких задачах с применением фильтров.
