@@ -6,7 +6,8 @@ from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
-from app.handlers.get_processes.keyboard import create_inline_kb, ProcessInfo, period_selection_kb
+from app.handlers.get_processes.keyboard import stage_selection_kb, ProcessInfo, period_selection_kb, \
+    display_mode_selection_keyboard
 from app.handlers.get_processes.state import OrchestratorProcessState
 from app.handlers.get_processes.utility import ProcessSearcher, TaskItem, TaskReport, TaskService
 from global_filter import RegisteredUser
@@ -32,7 +33,7 @@ async def search_process(message: Message, state: FSMContext):
         suitable_processes = ProcessSearcher.get_suitable_processes(processes, message.text)  # Подходящие процессы
 
         if suitable_processes:
-            await message.answer(text="Выберите нужный этап", reply_markup=await create_inline_kb(suitable_processes))
+            await message.answer(text="Выберите нужный этап", reply_markup=await display_mode_selection_keyboard())
             await state.set_state(OrchestratorProcessState.input_current_process)
         else:
             matches = ProcessSearcher.get_close_matches(processes, message.text)  # Похожие по префиксу названия
@@ -65,6 +66,18 @@ async def get_report_message(message: Message, state: FSMContext):
     except Exception as e:
         logger.error(f"При попытке получить информацию из очереди произошла ошибка: {e}")
         await message.answer("Произошла неизвестная ошибка")
+
+
+@orchestrator_process.callback_query(F.data.in_(['all_stages', 'specific_stage']))
+async def handle_stage_selection(callback_query: CallbackQuery, state: FSMContext):
+    await callback_query.answer()  # Подтверждаем нажатие кнопки
+
+    if callback_query.data == 'all_stages':
+        await callback_query.message.answer("Вы выбрали все этапы.")
+        # Здесь можно добавить логику для обработки выбора "Все этапы"
+    elif callback_query.data == 'specific_stage':
+        await callback_query.message.answer("Вы выбрали конкретный этап.")
+        # Здесь можно добавить логику для обработки выбора "Конкретный этап"
 
 
 @orchestrator_process.callback_query(ProcessInfo.filter())
