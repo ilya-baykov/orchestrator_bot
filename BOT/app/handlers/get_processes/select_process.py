@@ -96,15 +96,8 @@ orchestrator_process = Router()
 @orchestrator_process.callback_query(LevelFilter(level="1"))
 async def handle_process_info(message_or_callback: Union[types.Message, types.CallbackQuery]):
     """Отображает меню выбора нужного процесса и инициализирует уровень 1"""
-    if isinstance(message_or_callback, types.Message):
-        telegram_id = str(message_or_callback.from_user.id)
-        callback_data = ProcessInfo(level=1)
-    else:  # это callback
-        telegram_id = str(message_or_callback.from_user.id)
-        callback_data = ProcessInfo.unpack(message_or_callback.data)  # Извлекаем данные из callback
-
-    text, reply_markup = await select_processes_kb(callback_data, telegram_id=telegram_id)
-
+    callback_data = ProcessInfo(level=1)
+    text, reply_markup = await select_processes_kb(callback_data, telegram_id=str(message_or_callback.from_user.id))
     if isinstance(message_or_callback, types.Message):
         await message_or_callback.answer(text=text, reply_markup=reply_markup)
     else:
