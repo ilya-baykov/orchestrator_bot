@@ -164,15 +164,11 @@ async def inline_menu_content(callback_data: Optional[ProcessInfo] = None, teleg
     if callback_data is None:
         callback_data = ProcessInfo(level=1)  # Устанавливаем начальный уровень
 
-    if int(callback_data.level) == 1:
-        return await select_processes_kb(callback_data, telegram_id=str(telegram_id), sizes=(2,))
-    elif int(callback_data.level) == 2:
-        return select_stage_mod_kb(callback_data, sizes=(2,))
-    elif int(callback_data.level) == 3:
-        if callback_data.stage_mod == DisplayOptions.ALL_STAGES:
-            pass  # Здесь можно добавить логику для ALL_STAGES
-        elif callback_data.stage_mod == DisplayOptions.SPECIFIC_STAGE.name:
-            return await stage_selection_kb(callback_data, sizes=(2,))
-    elif int(callback_data.level) == 4:
-        ("А вот дальше клавиатуру формировать не нужно"
-         "Нужно отправить специальное сообщение , которое будет формироваться в другой функции")
+    # elif int(callback_data.level) == 3:
+    #     if callback_data.stage_mod == DisplayOptions.ALL_STAGES:
+    #         pass  # Здесь можно добавить логику для ALL_STAGES
+    #     elif callback_data.stage_mod == DisplayOptions.SPECIFIC_STAGE.name:
+    #         return await stage_selection_kb(callback_data, sizes=(2,))
+    # elif int(callback_data.level) == 4:
+    #     ("А вот дальше клавиатуру формировать не нужно"
+    #      "Нужно отправить специальное сообщение , которое будет формироваться в другой функции")

@@ -2,11 +2,13 @@ import logging
 from datetime import datetime, timedelta
 
 from aiogram import Router, F, types
-from aiogram.filters import Command
+from aiogram.filters import Command, Filter
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
-from app.handlers.get_processes.keyboard import stage_selection_kb, ProcessInfo
+from app.handlers.get_processes.filter import LevelFilter
+from app.handlers.get_processes.keyboard import stage_selection_kb, ProcessInfo, select_stage_mod_kb, \
+    select_processes_kb, DisplayOptions
 from app.handlers.get_processes.state import OrchestratorProcessState
 from app.handlers.get_processes.utility import inline_menu_content
 from global_filter import RegisteredUser
@@ -89,29 +91,47 @@ orchestrator_process = Router()
 #     await state.update_data({"callback_data": callback_data})
 #     await callback_query.answer(str(callback_data))
 
+
 @orchestrator_process.message(Command('get_process_info'))
-async def get_process_info(message: Message):
-    """Отображает меню выбора нужного процесса"""
-    text, reply_markup = await inline_menu_content(telegram_id=str(message.from_user.id))
+async def handle_level_1(message: types.Message):
+    """Отображает меню выбора нужного процесса и инициализирует уровень 1"""
+    callback_data = ProcessInfo(level=1)
+    text, reply_markup = await select_processes_kb(callback_data, telegram_id=str(message.from_user.id), sizes=(2,))
     await message.answer(text=text, reply_markup=reply_markup)
 
 
-@orchestrator_process.callback_query(ProcessInfo.filter())
-async def handle_process_selection(callback: types.CallbackQuery, callback_data: ProcessInfo):
-    """Обрабатывает выбор процесса и этапа для отображения статистики"""
-
-    # Проверяем, если уровень меньше 1, то не обрабатываем
-    if int(callback_data.level) < 1:
-        await callback.answer("Вы находитесь на самом верхнем уровне.")
-        return
-
-    text, reply_markup = await inline_menu_content(callback_data)
+@orchestrator_process.callback_query(LevelFilter(level="2"))
+async def handle_level_2(callback: types.CallbackQuery):
+    """Отображает меню выбора между 'Всеми этапами' и 'Конкретным этапом'"""
+    callback_data = ProcessInfo.unpack(callback.data)  # Извлекаем данные из callback
+    text, reply_markup = select_stage_mod_kb(callback_data, sizes=(2,))
     await callback.message.edit_text(text=text, reply_markup=reply_markup)
 
 
-@orchestrator_process.callback_query(ProcessInfo.filter())
-async def foo_bar(message: Message):
-    print("мЫ ТУТ")
+@orchestrator_process.callback_query(LevelFilter(level="3"))
+async def handle_level_3(callback: types.CallbackQuery):
+    """Обрабатывает нажатие выбора режима отображения статистики """
+    callback_data = ProcessInfo.unpack(callback.data)  # Извлекаем данные из callback
+    if callback_data.stage_mod == DisplayOptions.ALL_STAGES:
+        print("DisplayOptions.ALL_STAGES")
+        await callback.message.edit_text(text="ALL_STAGES")
+    elif callback_data.stage_mod == DisplayOptions.SPECIFIC_STAGE.name:
+        print("DisplayOptions.SPECIFIC_STAGE")
+        await callback.message.edit_text(text="SPECIFIC_STAGE")
+
+# @orchestrator_process.callback_query(LevelFilter(level="4"))
+# async def handle_level_four(callback: types.CallbackQuery):
+#     """Обрабатывает уровень 4 и отправляет специальное сообщение"""
+#     special_message = "Это специальное сообщение для уровня 4."
+#     await callback.message.answer(text=special_message)
+#
+#
+# @orchestrator_process.callback_query(ProcessInfo.filter())
+# async def handle_process_selection(callback: types.CallbackQuery, callback_data: ProcessInfo):
+#     """Обрабатывает выбор процесса и этапа для отображения статистики"""
+#
+#     text, reply_markup = await inline_menu_content(callback_data)
+#     await callback.message.edit_text(text=text, reply_markup=reply_markup)
 
 
 def register_orchestrator_process_handlers(dp):
