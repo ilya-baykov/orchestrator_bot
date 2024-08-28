@@ -119,11 +119,9 @@ async def handle_level_3(callback: types.CallbackQuery):
 async def handle_level_4(callback: types.CallbackQuery):
     """Обрабатывает нажатие выбора режима отображения статистики """
     callback_data = ProcessInfo.unpack(callback.data)  # Извлекаем данные из callback
-    if callback_data.stage_mod == DisplayOptions.ALL_STAGES:
-        print("DisplayOptions.ALL_STAGES")
+    if callback_data.stage_mod == DisplayOptions.ALL_STAGES.name:
         await callback.message.edit_text(text="ALL_STAGES")
     elif callback_data.stage_mod == DisplayOptions.SPECIFIC_STAGE.name:
-        print("DisplayOptions.SPECIFIC_STAGE")
         await callback.message.edit_text(text="SPECIFIC_STAGE")
 
 
