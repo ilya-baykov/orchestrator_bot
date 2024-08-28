@@ -128,9 +128,17 @@ class ReplyKeyboardsCreator(KeyboardsCreator):
 
 
 class InlineKeyboardsCreator(KeyboardsCreator):
-    def create(self, sizes: tuple[int] = (2,)):
+    def create(self, sizes: tuple[int] = (2,), current_level: int = None):
         for text, data in self.buttons.items():
             self.keyboard.add(InlineKeyboardButton(text=text, callback_data=data))
+
+        # Добавляем кнопку "Назад", если текущий уровень задан
+        if int(current_level) > 1:
+            back_button = InlineKeyboardButton(
+                text="Назад",
+                callback_data=ProcessInfo(level=int(current_level) - 1).pack()
+            )
+            self.keyboard.add(back_button)
 
         return self.keyboard.adjust(*sizes).as_markup()
 
@@ -141,12 +149,13 @@ async def select_processes_kb(process_info: ProcessInfo, telegram_id: str, sizes
 
     buttons = {str(process.process_name): ProcessInfo(
         process_name=process.process_name,
-        level=process_info.level + 1,
+        level=int(process_info.level) + 1,
         stage_mod=process_info.stage_mod
     ).pack()
                for process in processes
                }
-    return "Выберите процесс:", InlineKeyboardsCreator(buttons=buttons).create(sizes=sizes)
+    return "Выберите процесс:", InlineKeyboardsCreator(buttons=buttons).create(sizes=sizes,
+                                                                               current_level=process_info.level)
 
 
 def select_stage_mod_kb(process_info: ProcessInfo, sizes: tuple[int] = (2,),
@@ -156,7 +165,8 @@ def select_stage_mod_kb(process_info: ProcessInfo, sizes: tuple[int] = (2,),
                                   process_name=process_info.process_name).pack()
         for option in display_options
     }
-    return "Выберите режим отображения статистики:", InlineKeyboardsCreator(buttons=buttons).create(sizes=sizes)
+    return "Выберите режим отображения статистики:", InlineKeyboardsCreator(buttons=buttons).create(sizes=sizes,
+                                                                                                    current_level=process_info.level)
 
 
 async def stage_selection_kb(process_info: ProcessInfo, sizes: tuple[int] = (2,)):
@@ -168,14 +178,16 @@ async def stage_selection_kb(process_info: ProcessInfo, sizes: tuple[int] = (2,)
         for process in suitable_processes
     }
 
-    return "Выберите нужный этап:", InlineKeyboardsCreator(buttons=buttons).create(sizes=sizes)
+    return "Выберите нужный этап:", InlineKeyboardsCreator(buttons=buttons).create(sizes=sizes,
+                                                                                   current_level=process_info.level)
 
 
 def select_period_kb(process_info: ProcessInfo, sizes: tuple[int] = (2,),
                      period_options: Type[enum.Enum] = CurrentPeriodOptions):
     buttons = {
         period.value: ProcessInfo(level=int(process_info.level) + 1, period=period.name,
-                                  stage_mod=process_info.stage_mod).pack()
+                                  stage_mod=process_info.stage_mod, process_name=process_info.process_name).pack()
         for period in period_options
     }
-    return "Выберите за какой период показать статистику:", InlineKeyboardsCreator(buttons=buttons).create(sizes=sizes)
+    return "Выберите за какой период показать статистику:", InlineKeyboardsCreator(buttons=buttons).create(sizes=sizes,
+                                                                                                           current_level=process_info.level)

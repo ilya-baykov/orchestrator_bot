@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+from typing import Union
 
 from aiogram import Router, F, types
 from aiogram.filters import Command, Filter
@@ -92,11 +93,22 @@ orchestrator_process = Router()
 
 
 @orchestrator_process.message(Command('get_process_info'))
-async def handle_level_1(message: types.Message):
+@orchestrator_process.callback_query(LevelFilter(level="1"))
+async def handle_process_info(message_or_callback: Union[types.Message, types.CallbackQuery]):
     """Отображает меню выбора нужного процесса и инициализирует уровень 1"""
-    callback_data = ProcessInfo(level=1)
-    text, reply_markup = await select_processes_kb(callback_data, telegram_id=str(message.from_user.id), sizes=(2,))
-    await message.answer(text=text, reply_markup=reply_markup)
+    if isinstance(message_or_callback, types.Message):
+        telegram_id = str(message_or_callback.from_user.id)
+        callback_data = ProcessInfo(level=1)
+    else:  # это callback
+        telegram_id = str(message_or_callback.from_user.id)
+        callback_data = ProcessInfo.unpack(message_or_callback.data)  # Извлекаем данные из callback
+
+    text, reply_markup = await select_processes_kb(callback_data, telegram_id=telegram_id)
+
+    if isinstance(message_or_callback, types.Message):
+        await message_or_callback.answer(text=text, reply_markup=reply_markup)
+    else:
+        await message_or_callback.message.edit_text(text=text, reply_markup=reply_markup)
 
 
 @orchestrator_process.callback_query(LevelFilter(level="2"))
@@ -119,6 +131,7 @@ async def handle_level_3(callback: types.CallbackQuery):
 async def handle_level_4(callback: types.CallbackQuery):
     """Обрабатывает нажатие выбора режима отображения статистики """
     callback_data = ProcessInfo.unpack(callback.data)  # Извлекаем данные из callback
+    print(callback_data.process_name)
     if callback_data.stage_mod == DisplayOptions.ALL_STAGES.name:
         await callback.message.edit_text(text="ALL_STAGES")
     elif callback_data.stage_mod == DisplayOptions.SPECIFIC_STAGE.name:
