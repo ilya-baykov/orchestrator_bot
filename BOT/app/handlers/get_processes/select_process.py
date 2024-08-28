@@ -93,42 +93,59 @@ orchestrator_process = Router()
 
 
 @orchestrator_process.message(Command('get_process_info'))
-@orchestrator_process.callback_query(LevelFilter(level="1"))
+@orchestrator_process.callback_query(LevelFilter(level=1))
 async def handle_process_info(message_or_callback: Union[types.Message, types.CallbackQuery]):
     """Отображает меню выбора нужного процесса и инициализирует уровень 1"""
-    callback_data = ProcessInfo(level=1)
-    text, reply_markup = await select_processes_kb(callback_data, telegram_id=str(message_or_callback.from_user.id))
+    text, reply_markup = await select_processes_kb(level=1, telegram_id=str(message_or_callback.from_user.id))
     if isinstance(message_or_callback, types.Message):
         await message_or_callback.answer(text=text, reply_markup=reply_markup)
     else:
         await message_or_callback.message.edit_text(text=text, reply_markup=reply_markup)
 
 
-@orchestrator_process.callback_query(LevelFilter(level="2"))
-async def handle_level_2(callback: types.CallbackQuery):
-    """Отображает меню выбора между 'Всеми этапами' и 'Конкретным этапом'"""
-    callback_data = ProcessInfo.unpack(callback.data)  # Извлекаем данные из callback
-    text, reply_markup = select_stage_mod_kb(callback_data)
+@orchestrator_process.callback_query(LevelFilter(level=2))
+async def handle_level_2(callback: types.CallbackQuery, state: FSMContext):
+    """На этом этапе мы получаем id процесса формируем клавиатуру с выбором периода для фильтрации"""
+    callback_data = ProcessInfo.unpack(callback.data)
+    if callback_data.id:
+        await state.update_data(id=callback_data.id)
+    text, reply_markup = select_period_kb(level=callback_data.lvl, sizes=(3,))
     await callback.message.edit_text(text=text, reply_markup=reply_markup)
 
 
-@orchestrator_process.callback_query(LevelFilter(level="3"))
-async def handle_level_3(callback: types.CallbackQuery):
-    """Отображает меню с выбором периода для фильтрации статистки по времени"""
-    callback_data = ProcessInfo.unpack(callback.data)  # Извлекаем данные из callback
-    text, reply_markup = select_period_kb(callback_data, sizes=(3,))
+@orchestrator_process.callback_query(LevelFilter(level=3))
+async def handle_level_3(callback: types.CallbackQuery, state: FSMContext):
+    """На этом этапе мы получаем период фильтрации и формируем клавиатуру для ввода режима отображения статистики"""
+    callback_data = ProcessInfo.unpack(callback.data)
+    if callback_data.period:
+        await state.update_data(period=callback_data.period)
+
+    text, reply_markup = select_stage_mod_kb(level=callback_data.lvl)
     await callback.message.edit_text(text=text, reply_markup=reply_markup)
 
 
-@orchestrator_process.callback_query(LevelFilter(level="4"))
-async def handle_level_4(callback: types.CallbackQuery):
-    """Обрабатывает нажатие выбора режима отображения статистики """
+@orchestrator_process.callback_query(LevelFilter(level=4))
+async def handle_level_4(callback: types.CallbackQuery, state: FSMContext):
+    """На этом этапе мы получаем режим отображения статистики и при необходимости формируем клавиатуру с этапами"""
+    callback_data = ProcessInfo.unpack(callback.data)
+    if callback_data.mod:
+        await state.update_data(mod=callback_data.mod)
+    if callback_data.mod == DisplayOptions.ALL_STAGES.name:
+        state_data = await state.get_data()
+        await callback.message.edit_text(text=str(state_data))
+    else:
+        state_data = await state.get_data()
+        text, reply_markup = await stage_selection_kb(level=callback_data.lvl, process_id=state_data.get('id', 0))
+        await callback.message.edit_text(text=text, reply_markup=reply_markup)
+
+
+@orchestrator_process.callback_query(LevelFilter(level=5))
+async def handle_level_5(callback: types.CallbackQuery, state: FSMContext):
     callback_data = ProcessInfo.unpack(callback.data)  # Извлекаем данные из callback
-    print(callback_data.process_name)
-    if callback_data.stage_mod == DisplayOptions.ALL_STAGES.name:
-        await callback.message.edit_text(text="ALL_STAGES")
-    elif callback_data.stage_mod == DisplayOptions.SPECIFIC_STAGE.name:
-        await callback.message.edit_text(text="SPECIFIC_STAGE")
+    if callback_data.stage:
+        await state.update_data(stage=callback_data.stage)
+    state_data = await state.get_data()
+    await callback.message.edit_text(text=str(state_data))
 
 
 def register_orchestrator_process_handlers(dp):
