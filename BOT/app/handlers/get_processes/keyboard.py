@@ -132,18 +132,7 @@ class InlineKeyboardsCreator(KeyboardsCreator):
         for text, data in self.buttons.items():
             self.keyboard.add(InlineKeyboardButton(text=text, callback_data=data))
 
-        # Добавляем кнопку "Назад" внизу
-        back_button = InlineKeyboardButton(
-            text="Назад",
-            callback_data=ProcessInfo(level=self.get_previous_level()).pack()
-        )
-        self.keyboard.add(back_button)
-
         return self.keyboard.adjust(*sizes).as_markup()
-
-    def get_previous_level(self):
-        # Метод для получения предыдущего уровня
-        return self.buttons.get("level", 1) - 1  # Пример, как можно получить уровень
 
 
 async def select_processes_kb(process_info: ProcessInfo, telegram_id: str, sizes: tuple[int] = (2,)):
