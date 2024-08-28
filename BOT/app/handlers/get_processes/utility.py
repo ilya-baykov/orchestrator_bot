@@ -159,16 +159,3 @@ logger = logging.getLogger(__name__)
 #                                               "Не выполнено (Ошибка бизнеса)")
 #
 #         return report
-async def inline_menu_content(callback_data: Optional[ProcessInfo] = None, telegram_id: Optional[str] = None):
-    # Инициализация ProcessInfo с начальными значениями, если callback_data равно None
-    if callback_data is None:
-        callback_data = ProcessInfo(level=1)  # Устанавливаем начальный уровень
-
-    # elif int(callback_data.level) == 3:
-    #     if callback_data.stage_mod == DisplayOptions.ALL_STAGES:
-    #         pass  # Здесь можно добавить логику для ALL_STAGES
-    #     elif callback_data.stage_mod == DisplayOptions.SPECIFIC_STAGE.name:
-    #         return await stage_selection_kb(callback_data, sizes=(2,))
-    # elif int(callback_data.level) == 4:
-    #     ("А вот дальше клавиатуру формировать не нужно"
-    #      "Нужно отправить специальное сообщение , которое будет формироваться в другой функции")
