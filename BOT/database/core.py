@@ -36,5 +36,11 @@ class DataBase:
             await connect.run_sync(Base.metadata.drop_all)
         logger.info("БД очищена")
 
+    async def reflect_tables(self, schema='public'):
+        """Загружает метаданные для существующих таблиц в указанной схеме."""
+        async with self.async_engine.begin() as connect:
+            await connect.run_sync(Base.metadata.reflect, bind=connect, schema=schema)
+        logger.info(f"Загружены таблицы из схемы: {schema}")
+
 
 db = DataBase()

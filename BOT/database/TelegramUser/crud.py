@@ -1,12 +1,14 @@
+import logging
 from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
-from database.AccessList.model import AccessList
 from database.TelegramUser.model import TelegramUser
 from database.base_crud import BaseCRUD
 from database.core import db
+
+logger = logging.getLogger(__name__)
 
 
 class TelegramUserCRUD(BaseCRUD):
