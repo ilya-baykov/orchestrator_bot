@@ -1,6 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 import logging
-
 from sqlalchemy.orm import DeclarativeBase
 
 from database.settings import settings
@@ -31,15 +30,16 @@ class DataBase:
 
     async def reset_database(self):
         logger.info("Очищаются все таблицы")
-
         async with self.async_engine.begin() as connect:
             await connect.run_sync(Base.metadata.drop_all)
         logger.info("БД очищена")
 
     async def reflect_tables(self, schema='public'):
         """Загружает метаданные для существующих таблиц в указанной схеме."""
+        logger.info(f"Попытка отразить таблицы из схемы: {schema}")
         async with self.async_engine.begin() as connect:
-            await connect.run_sync(Base.metadata.reflect, bind=connect, schema=schema)
+            # Use the connection directly without bind
+            await connect.run_sync(Base.metadata.reflect, schema=schema)  # Removed bind argument
         logger.info(f"Загружены таблицы из схемы: {schema}")
 
 
