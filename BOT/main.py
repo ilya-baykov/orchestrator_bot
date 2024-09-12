@@ -11,7 +11,7 @@ from logger_settings import setup_logger
 async def main():
     # await db.reset_database()
     await db.create_db()
-    await db.reflect_tables(schema='orchestrator')
+    await db.reflect_tables(schema='orchestrator')  # Загрузка существующих таблиц из схемы orchestrator
     await start_bot()
 
 

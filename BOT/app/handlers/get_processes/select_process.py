@@ -147,6 +147,16 @@ async def handle_level_5(callback: types.CallbackQuery, state: FSMContext):
     state_data = await state.get_data()
     await callback.message.edit_text(text=str(state_data))
 
+    # text = ('RPA012: Выплаты\n'
+    #         'Процесс выполняется на 6 машинах\n'
+    #         'На этапе "Формирование банковский и почтовых файлов": 13 транзакций\n'
+    #         'На этапе "Отправка СнО на согласование": 31 транзакций\n'
+    #         'Всего в обработке:46 транзакций\n'
+    #         'Упали в ошибку: 2 транзакции\n\n'
+    #         'Примерное время ожидания: 1 час 57 минут')
+    #
+    # await callback.message.edit_text(text=text)
+
 
 def register_orchestrator_process_handlers(dp):
     dp.include_router(orchestrator_process)

@@ -34,12 +34,10 @@ class DataBase:
             await connect.run_sync(Base.metadata.drop_all)
         logger.info("БД очищена")
 
-    async def reflect_tables(self, schema='public'):
+    async def reflect_tables(self, schema='orchestrator'):
         """Загружает метаданные для существующих таблиц в указанной схеме."""
-        logger.info(f"Попытка отразить таблицы из схемы: {schema}")
         async with self.async_engine.begin() as connect:
-            # Use the connection directly without bind
-            await connect.run_sync(Base.metadata.reflect, schema=schema)  # Removed bind argument
+            await connect.run_sync(Base.metadata.reflect, schema=schema)
         logger.info(f"Загружены таблицы из схемы: {schema}")
 
 

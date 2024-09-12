@@ -30,6 +30,7 @@ class BaseCRUD:
     @classmethod
     async def find_all(cls, **filter_by):
         async with db.Session() as session:
+            # Получаем все поля модели
             query = select(cls.model).filter_by(**filter_by).execution_options(schema=cls.schema)
             result = await session.execute(query)
             logger.info(f"{cls} find_all {filter_by} : {result}")
