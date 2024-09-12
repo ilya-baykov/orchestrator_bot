@@ -1,7 +1,5 @@
 from sqlalchemy import Column, BigInteger, Integer, String, DateTime, TIMESTAMP
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
+from database.core import Base
 
 
 class OrchestratorJobs(Base):

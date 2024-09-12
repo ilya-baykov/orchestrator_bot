@@ -1,34 +1,29 @@
 import re
+from datetime import datetime
 
 from aiogram import Router, F
 from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from database.OrchestratorJobs.crud import OrchestratorJobsCRUD
-from database.OrchestratorJobs.model import OrchestratorJobs
+from database.OrchestratorTasks.crud import OrchestratorTasksCRUD
 from throttling_middleware import ThrottlingMiddleware
 from app.handlers.start.filter import IsTrueContact
 from app.handlers.start.keyboard import sent_contact_kb
 from app.handlers.start.state import UserRegistration
 from database.TelegramUser.crud import TelegramUserCRUD
 from database.AccessList.crud import AccessListCRUD
-from database.TelegramUser.model import TelegramUser
 
 start = Router()
 start.message.middleware(ThrottlingMiddleware(limit=2))
+
+
 
 
 @start.message(CommandStart())
 async def start_command(message: Message, state: FSMContext):
     """Обработчик стартовой команды"""
     user = await TelegramUserCRUD.find_one_or_none(telegram_id=str(message.from_user.id))
-    last_job = await OrchestratorJobsCRUD.find_all(
-        limit=1,
-        order_by=OrchestratorJobs.created.desc(),  # Сортировка по полю created в порядке убывания
-        process_version_id=1048  # Фильтр по process_version_id
-    )
-    print(last_job)
     if user:
         await message.answer(f"{message.from_user.username}, вы уже были успешно зарегистрированы")
     else:

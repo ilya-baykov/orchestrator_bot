@@ -16,6 +16,7 @@ async def main():
 
 
 if __name__ == '__main__':
+
     print("Бот запущен")
     logger = setup_logger()
     urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
