@@ -16,4 +16,4 @@ class UserInput(Base):
     department_access = Column(String, nullable=False)  # Указывается доступность определённому отделу
 
     def __repr__(self):
-        return f"<UserInput(id={self.id}, process_name={self.process_name})>"
+        return f"<UserInput(id={self.id}, process_name={self.process_name},subprocess_name={self.subprocess_name})>"
