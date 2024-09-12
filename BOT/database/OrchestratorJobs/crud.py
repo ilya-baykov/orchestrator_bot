@@ -13,32 +13,31 @@ class OrchestratorJobsCRUD(BaseCRUD):
     schema = 'orchestrator'
 
     @classmethod
-    async def find_all(cls, limit=None, order_by=None, **filter_by):
+    async def find_latest_by_process_version(cls, process_version_id: int, start_time: datetime, end_time: datetime) \
+            -> Optional[OrchestratorJobs]:
+        """
+        Находит последний объект OrchestratorJobs по заданному идентификатору версии процесса
+        и диапазону времени создания.
+
+        :param process_version_id: Идентификатор версии процесса для фильтрации.
+        :param start_time: Начальное время диапазона для фильтрации по полю created.
+        :param end_time: Конечное время диапазона для фильтрации по полю created.
+        :return: Последний объект OrchestratorJobs, соответствующий условиям, или None, если не найден.
+        """
         async with db.Session() as session:
-            query = select(cls.model)
-
-            # Применяем фильтры (если есть)
-            if filter_by:
-                filters = [getattr(cls.model, key) == value for key, value in filter_by.items()]
-                query = query.where(*filters)
-
-            # Применяем сортировку
-            if order_by is not None:  # Проверяем, что order_by не None
-                query = query.order_by(order_by)
-
-            # Применяем лимит, если указан
-            if limit is not None:  # Проверяем, что limit не None
-                query = query.limit(limit)
-
-            query = query.execution_options(schema=cls.schema)
+            query = (
+                select(cls.model)
+                .filter(
+                    and_(
+                        cls.model.process_version_id == process_version_id,
+                        cls.model.created.between(start_time, end_time)
+                    )
+                )
+                .order_by(cls.model.created.desc())  # Сортируем по полю created в порядке убывания
+                .limit(1)
+            )
             result = await session.execute(query)
-            return result.scalars().all()
-            # Получение последней задачи:
-            # last_job = await OrchestratorJobsCRUD.find_all(
-            #     limit=1,
-            #     order_by=OrchestratorJobs.created.desc(),  # Сортировка по полю created в порядке убывания
-            #     process_version_id=1048  # Фильтр по process_version_id
-            # )
+            return result.scalar_one_or_none()
 
     @classmethod
     async def get_count_machine(cls, process_version_id: int, start_time: datetime, end_time: datetime) -> Optional[
