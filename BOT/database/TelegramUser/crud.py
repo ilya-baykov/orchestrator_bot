@@ -16,11 +16,12 @@ class TelegramUserCRUD(BaseCRUD):
 
     @classmethod
     async def get_department_by_telegram_id(cls, telegram_id: str) -> Optional[str]:
+        """Получить отдел, к которому 'привязан' сотрудник """
         async with db.Session() as session:
             query = (
-                select(TelegramUser)
-                .options(selectinload(TelegramUser.access_list))
-                .filter(TelegramUser.telegram_id == telegram_id)
+                select(cls.model)
+                .options(selectinload(cls.model.access_list))
+                .filter(cls.model.telegram_id == telegram_id)
             )
             result = await session.execute(query)
             telegram_user_instance = result.scalar_one_or_none()
