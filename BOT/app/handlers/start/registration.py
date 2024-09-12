@@ -6,7 +6,6 @@ from aiogram.filters import CommandStart
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message
 
-from database.OrchestratorTasks.crud import OrchestratorTasksCRUD
 from throttling_middleware import ThrottlingMiddleware
 from app.handlers.start.filter import IsTrueContact
 from app.handlers.start.keyboard import sent_contact_kb
@@ -16,8 +15,6 @@ from database.AccessList.crud import AccessListCRUD
 
 start = Router()
 start.message.middleware(ThrottlingMiddleware(limit=2))
-
-
 
 
 @start.message(CommandStart())
