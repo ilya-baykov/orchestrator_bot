@@ -138,7 +138,8 @@ async def handle_level_4(callback: types.CallbackQuery, state: FSMContext):
     state_data = await state.get_data()
 
     if callback_data.mod == DisplayOptions.ALL_STAGES.name:  # Если выбрали 'Показать все этапы'
-        await callback.message.edit_text(text=str(state_data.get('all_process_stages', 'Этапы не найдены')))
+        answer: str = ...  # Тут будет вызов функции, которая будет формировать ответ для пользователя
+        await callback.message.edit_text(text=str(state_data))
     else:
         text, reply_markup = await stage_selection_kb(level=callback_data.lvl,
                                                       suitable_processes=state_data.get('all_process_stages', []))
@@ -148,20 +149,10 @@ async def handle_level_4(callback: types.CallbackQuery, state: FSMContext):
 @orchestrator_process.callback_query(LevelFilter(level=5))
 async def handle_level_5(callback: types.CallbackQuery, state: FSMContext):
     callback_data = ProcessInfo.unpack(callback.data)  # Извлекаем данные из callback
-    if callback_data.stage:
-        await state.update_data(stage=callback_data.stage)
+    if callback_data.stage: await state.update_data(stage=callback_data.stage)  # Фиксируем выбранный этап
     state_data = await state.get_data()
+    answer: str = ...  # Тут будет вызов функции, которая будет формировать ответ для пользователя
     await callback.message.edit_text(text=str(state_data))
-
-    # text = ('RPA012: Выплаты\n'
-    #         'Процесс выполняется на 6 машинах\n'
-    #         'На этапе "Формирование банковский и почтовых файлов": 13 транзакций\n'
-    #         'На этапе "Отправка СнО на согласование": 31 транзакций\n'
-    #         'Всего в обработке:46 транзакций\n'
-    #         'Упали в ошибку: 2 транзакции\n\n'
-    #         'Примерное время ожидания: 1 час 57 минут')
-    #
-    # await callback.message.edit_text(text=text)
 
 
 def register_orchestrator_process_handlers(dp):
