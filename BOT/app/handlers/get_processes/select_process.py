@@ -10,7 +10,9 @@ from aiogram.types import Message, CallbackQuery
 from app.handlers.get_processes.filter import LevelFilter
 from app.handlers.get_processes.keyboard import stage_selection_kb, ProcessInfo, select_stage_mod_kb, \
     select_processes_kb, DisplayOptions, select_period_kb
-from app.handlers.get_processes.state import OrchestratorProcessState
+from app.handlers.get_processes.state import update_process_stages_if_not_exists
+from database.TelegramUser.crud import TelegramUserCRUD
+from database.UserInput.crud import UserInputCRUD
 from global_filter import RegisteredUser
 from requests_objects.tasks_api import tasks_api
 
@@ -94,9 +96,14 @@ orchestrator_process = Router()
 
 @orchestrator_process.message(Command('get_process_info'))
 @orchestrator_process.callback_query(LevelFilter(level=1))
-async def handle_process_info(message_or_callback: Union[types.Message, types.CallbackQuery]):
+async def handle_process_info(message_or_callback: Union[types.Message, types.CallbackQuery], state: FSMContext):
     """Отображает меню выбора нужного процесса и инициализирует уровень 1"""
-    text, reply_markup = await select_processes_kb(level=1, telegram_id=str(message_or_callback.from_user.id))
+    await state.update_data(all_process_stages=None)
+
+    # Получаем процессы, которые относятся к пользователю
+    department = await TelegramUserCRUD.get_department_by_telegram_id(telegram_id=str(message_or_callback.from_user.id))
+    processes = await UserInputCRUD.find_all(department_access=department)
+    text, reply_markup = await select_processes_kb(level=1, processes=processes)
     if isinstance(message_or_callback, types.Message):
         await message_or_callback.answer(text=text, reply_markup=reply_markup)
     else:
@@ -107,8 +114,7 @@ async def handle_process_info(message_or_callback: Union[types.Message, types.Ca
 async def handle_level_2(callback: types.CallbackQuery, state: FSMContext):
     """На этом этапе мы получаем id процесса формируем клавиатуру с выбором периода для фильтрации"""
     callback_data = ProcessInfo.unpack(callback.data)
-    if callback_data.id:
-        await state.update_data(id=callback_data.id)
+    if callback_data.id: await state.update_data(id=callback_data.id)  # Фиксируем id выбранного процесса
     text, reply_markup = select_period_kb(level=callback_data.lvl, sizes=(3,))
     await callback.message.edit_text(text=text, reply_markup=reply_markup)
 
@@ -117,9 +123,7 @@ async def handle_level_2(callback: types.CallbackQuery, state: FSMContext):
 async def handle_level_3(callback: types.CallbackQuery, state: FSMContext):
     """На этом этапе мы получаем период фильтрации и формируем клавиатуру для ввода режима отображения статистики"""
     callback_data = ProcessInfo.unpack(callback.data)
-    if callback_data.period:
-        await state.update_data(period=callback_data.period)
-
+    if callback_data.period: await state.update_data(period=callback_data.period)  # Фиксируем период для фильтрации
     text, reply_markup = select_stage_mod_kb(level=callback_data.lvl)
     await callback.message.edit_text(text=text, reply_markup=reply_markup)
 
@@ -128,14 +132,16 @@ async def handle_level_3(callback: types.CallbackQuery, state: FSMContext):
 async def handle_level_4(callback: types.CallbackQuery, state: FSMContext):
     """На этом этапе мы получаем режим отображения статистики и при необходимости формируем клавиатуру с этапами"""
     callback_data = ProcessInfo.unpack(callback.data)
-    if callback_data.mod:
-        await state.update_data(mod=callback_data.mod)
-    if callback_data.mod == DisplayOptions.ALL_STAGES.name:
-        state_data = await state.get_data()
-        await callback.message.edit_text(text=str(state_data))
+    if callback_data.mod: await state.update_data(mod=callback_data.mod)  # Фиксируем режим отображения
+
+    await update_process_stages_if_not_exists(state=state)  # Подгружаем один раз все этапы
+    state_data = await state.get_data()
+
+    if callback_data.mod == DisplayOptions.ALL_STAGES.name:  # Если выбрали 'Показать все этапы'
+        await callback.message.edit_text(text=str(state_data.get('all_process_stages', 'Этапы не найдены')))
     else:
-        state_data = await state.get_data()
-        text, reply_markup = await stage_selection_kb(level=callback_data.lvl, process_id=state_data.get('id', 0))
+        text, reply_markup = await stage_selection_kb(level=callback_data.lvl,
+                                                      suitable_processes=state_data.get('all_process_stages', []))
         await callback.message.edit_text(text=text, reply_markup=reply_markup)
 
 
