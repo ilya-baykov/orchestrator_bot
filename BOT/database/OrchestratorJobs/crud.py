@@ -64,11 +64,3 @@ class OrchestratorJobsCRUD(BaseCRUD):
             result = await session.execute(query)
             count = result.scalar()  # Получаем значение из результата
             return count
-
-            # start_time_dt = datetime(2023, 12, 22, 20, 0, 0)  # 2023-12-22 20:00:00
-            # end_time_dt = datetime(2023, 12, 22, 23, 0, 0)  # 2023-12-22 23:00:00
-            #
-            # # Вызов метода с готовыми объектами datetime
-            # cnt = await OrchestratorJobsCRUD.get_count_machine(process_version_id=1048, start_time=start_time_dt,
-            #                                                    end_time=end_time_dt)
-            # print(cnt)
