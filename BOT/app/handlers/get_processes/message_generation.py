@@ -73,25 +73,26 @@ class TransactionCollector:
 
     async def _get_information_stage(self, stage: UserInput) -> Optional[OrchestratorFields]:
         process = await OrchestratorProcessesCRUD.find_one_or_none(guid=stage.subprocess_guid)  # Получаем процесс
-        process_version_id = process.process_version_id  # Получаем версию процесса
 
-        job = await OrchestratorJobsCRUD.find_latest_by_process_version(process_version_id=process_version_id,
-                                                                        start_time=self.start_time,
-                                                                        end_time=self.end_time)
-        if job:
-            count_machine = await OrchestratorJobsCRUD.get_count_machine(process_version_id=process_version_id,
-                                                                         start_time=self.start_time,
-                                                                         end_time=self.end_time)
-
-            queue = await OrchestratorQueuesCRUD.find_one_or_none(guid="58f47683-9b3e-43ad-8157-0507fa3fde47")
-
-            tasks = await OrchestratorTasksCRUD.find_by_queue_id_and_created(queue_id=queue.id,
+        if process:
+            process_version_id = process.process_version_id  # Получаем версию процесса
+            job = await OrchestratorJobsCRUD.find_latest_by_process_version(process_version_id=process_version_id,
+                                                                            start_time=self.start_time,
+                                                                            end_time=self.end_time)
+            if job:
+                count_machine = await OrchestratorJobsCRUD.get_count_machine(process_version_id=process_version_id,
                                                                              start_time=self.start_time,
                                                                              end_time=self.end_time)
 
-            stages_fields = OrchestratorFields(stage=stage, job_status=job.status, count_machine=count_machine,
-                                               tasks=tasks)
-            return stages_fields
+                queue = await OrchestratorQueuesCRUD.find_one_or_none(guid="58f47683-9b3e-43ad-8157-0507fa3fde47")
+
+                tasks = await OrchestratorTasksCRUD.find_by_queue_id_and_created(queue_id=queue.id,
+                                                                                 start_time=self.start_time,
+                                                                                 end_time=self.end_time)
+
+                stages_fields = OrchestratorFields(stage=stage, job_status=job.status, count_machine=count_machine,
+                                                   tasks=tasks)
+                return stages_fields
         return None
 
     async def get_stages_info(self) -> List[OrchestratorFields]:
