@@ -17,7 +17,6 @@ class DisplayOptions(enum.Enum):
 class CurrentPeriodOptions(enum.Enum):
     HOUR = "За текущий час"
     DAY = "За текущий день"
-    YEAR = "За текущий год"
 
 
 class ProcessInfo(CallbackData, prefix="menu"):
