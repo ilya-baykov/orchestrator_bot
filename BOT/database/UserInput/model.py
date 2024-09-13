@@ -1,4 +1,5 @@
 from sqlalchemy import Column, String, Integer
+from sqlalchemy.orm import relationship
 
 from database.core import Base
 
@@ -6,14 +7,16 @@ from database.core import Base
 class UserInput(Base):
     __tablename__ = 'user_input'
 
-    id = Column(Integer, primary_key=True, index=True)  # id записи в таблице
-    process_name = Column(String, index=True, unique=False, nullable=False)  # Имя робота/проекта
-    stage = Column(String, nullable=False)  # Этап процесса
-    subprocess_name = Column(String, nullable=False)  # Имя процесса
-    subprocess_guid = Column(String, nullable=False, unique=True)  # Guid процесса
-    queue_name = Column(String, nullable=False, unique=True)  # Имя очереди процесса
-    queue_guid = Column(String, nullable=False, unique=True)  # Guid очереди
-    department_access = Column(String, nullable=False)  # Указывается доступность определённому отделу
+    id = Column(Integer, primary_key=True, index=True)
+    process_name = Column(String, index=True, unique=False, nullable=False)
+    stage = Column(String, nullable=False)
+    subprocess_name = Column(String, nullable=False)
+    subprocess_guid = Column(String, nullable=False, unique=True)
+    queue_name = Column(String, nullable=False, unique=True)
+    queue_guid = Column(String, nullable=False, unique=True)
+
+    # Связь с FilterTable
+    filters = relationship("FilterTable", back_populates="user_input")
 
     def __repr__(self):
-        return f"<UserInput(id={self.id}, process_name={self.process_name},subprocess_name={self.subprocess_name})>"
+        return f"<UserInput(id={self.id}, process_name={self.process_name}, subprocess_name={self.subprocess_name})>"
