@@ -19,4 +19,4 @@ class UserInput(Base):
     filters = relationship("FilterTable", back_populates="user_input")
 
     def __repr__(self):
-        return f"<UserInput(id={self.id}, process_name={self.process_name}, subprocess_name={self.subprocess_name})>"
+        return f"<UserInput(id={self.id}, process_name={self.process_name}, subprocess_name={self.subprocess_name}), queue_name={self.queue_name},queue_guid={self.queue_guid}>"
