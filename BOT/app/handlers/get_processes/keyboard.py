@@ -9,14 +9,33 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from database.UserInput.model import UserInput
 
 
+class CurrentPeriodOptions(enum.Enum):
+    """Перечисление для различных временных периодов с их русскими названиями."""
+
+    HOUR = 'За последний час'
+    DAY = 'За последний день'
+    WEEKLY = 'За последнюю неделю'
+    MONTH = 'За последний месяц'
+    YEAR = 'За последний год'
+
+    @classmethod
+    def get_value_ru_key(cls, ru_key: str) -> Optional['CurrentPeriodOptions']:
+        """
+        Получает значение перечисления на основе ключа на русском языке.
+
+        :param ru_key: Ключ на русском языке, который нужно найти в значениях перечисления.
+        :return: Значение перечисления, соответствующее найденному ключу, или None, если ключ не найден.
+        """
+        for key, value in cls.__members__.items():
+            # Проверяем, содержится ли ru_key в значении перечисления (без учета регистра)
+            if ru_key.lower() in value.value.lower():
+                return value
+        return None
+
+
 class DisplayOptions(enum.Enum):
     ALL_STAGES = "Все этапы"
     SPECIFIC_STAGE = "Конкретный этап"
-
-
-class CurrentPeriodOptions(enum.Enum):
-    HOUR = "За текущий час"
-    DAY = "За текущий день"
 
 
 class ProcessInfo(CallbackData, prefix="menu"):
@@ -104,11 +123,12 @@ async def stage_selection_kb(level: int, suitable_processes: List[UserInput], si
                                                                                    current_level=level)
 
 
-def select_period_kb(level: int, sizes: tuple[int] = (2,),
-                     period_options: Type[enum.Enum] = CurrentPeriodOptions):
+def select_period_kb(level: int, ru_periods: list, sizes: tuple[int] = (2,)):
     buttons = {
         period.value: ProcessInfo(lvl=level + 1, period=period.name).pack()
-        for period in period_options
+        for ru_period in ru_periods
+        if (period := CurrentPeriodOptions.get_value_ru_key(ru_period))
     }
+
     return "Выберите за какой период показать статистику:", InlineKeyboardsCreator(buttons=buttons).create(sizes=sizes,
                                                                                                            current_level=level)
