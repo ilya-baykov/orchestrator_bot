@@ -1,4 +1,6 @@
-from sqlalchemy import Column, BigInteger, Integer, String, DateTime, TIMESTAMP
+from sqlalchemy import Column, BigInteger, Integer, String, DateTime, TIMESTAMP, ForeignKey
+from sqlalchemy.orm import relationship
+
 from database.core import Base
 
 
@@ -9,7 +11,7 @@ class OrchestratorJobs(Base):
     id = Column(BigInteger, primary_key=True)  # id записи в таблице
     guid = Column(String, nullable=True)  # GUID задачи (изменено на String, так как character может быть ограничен)
     robot_id = Column(BigInteger, nullable=True)  # ID робота
-    process_version_id = Column(BigInteger, nullable=True)  # ID версии процесса
+    process_version_id = Column(BigInteger, ForeignKey('orchestrator.processes.process_version_id'), nullable=True)
     task_id = Column(BigInteger, nullable=True)  # ID задачи
     status = Column(Integer, nullable=True)  # Статус задачи
     created = Column(TIMESTAMP, nullable=False)  # Дата создания
@@ -22,6 +24,8 @@ class OrchestratorJobs(Base):
     account_id = Column(BigInteger, nullable=True)  # ID аккаунта
     schedule_id = Column(BigInteger, nullable=True)  # ID расписания
     robot_group_id = Column(Integer, nullable=True)  # ID группы роботов
+
+    process = relationship('OrchestratorProcesses', back_populates='jobs')
 
     def __repr__(self):
         return f"<OrchestratorJobs(id={self.id}, guid={self.guid}, status={self.status})>"

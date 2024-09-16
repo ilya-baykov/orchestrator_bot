@@ -1,4 +1,5 @@
 from sqlalchemy import Column, BigInteger, Integer, String, Text, Float, TIMESTAMP
+from sqlalchemy.orm import relationship
 
 from database.core import Base
 
@@ -20,6 +21,8 @@ class OrchestratorProcesses(Base):
     process_type = Column(Integer, nullable=False)  # Тип процесса
     available_via_sherpa_assistant = Column(Integer, nullable=False)  # Доступно через помощника Sherpa
     min_version_to_run = Column(Float, nullable=False)  # Минимальная версия для запуска
+
+    jobs = relationship('OrchestratorJobs', back_populates='process')
 
     def __repr__(self):
         return (f"<OrchestratorProcesses(id={self.id}, guid={self.guid}, name={self.name}, "
