@@ -40,6 +40,10 @@ class TimeRangeCreator:
             return end_time - timedelta(hours=1), end_time
         elif self.filtering_period == CurrentPeriodOptions.DAY:  # Фильтрация за последний день
             return end_time - timedelta(days=1), end_time
+        elif self.filtering_period == CurrentPeriodOptions.WEEKLY:  # Фильтрация за последний день
+            return end_time - timedelta(days=7), end_time
+        elif self.filtering_period == CurrentPeriodOptions.MONTH:  # Фильтрация за последний день
+            return end_time - timedelta(days=30), end_time
 
     def get_time_range(self) -> tuple[datetime, datetime]:
         return self._end_time, self._start_time
