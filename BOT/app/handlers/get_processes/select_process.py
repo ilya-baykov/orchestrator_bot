@@ -65,10 +65,9 @@ async def handle_level_4(callback: types.CallbackQuery, state: FSMContext):
     state_data = await state.get_data()  # Получаем всю нужную информацию для формирования запроса
     all_process_stages = state_data.get('all_process_stages', [])  # Информация по всем выбранным этапам
     period = state_data.get('period')  # Информация по периоду фильтрации
-    print(state_data)
     if callback_data.mod == DisplayOptions.ALL_STAGES.name:  # Если выбрали 'Показать все этапы'
         stages_info = await TransactionCollector(stages=all_process_stages, filtering_period=period).get_stages_info()
-        answer: str = MessageCreator(process_name=f"{'RPA071'}", stages_info=stages_info).answer_text
+        answer: str = MessageCreator(stages_info=stages_info).answer_text
         await callback.message.edit_text(text=answer)
     else:
         text, reply_markup = await stage_selection_kb(level=callback_data.lvl,
@@ -79,10 +78,18 @@ async def handle_level_4(callback: types.CallbackQuery, state: FSMContext):
 @orchestrator_process.callback_query(LevelFilter(level=5))
 async def handle_level_5(callback: types.CallbackQuery, state: FSMContext):
     callback_data = ProcessInfo.unpack(callback.data)  # Извлекаем данные из callback
-    if callback_data.stage: await state.update_data(stage=callback_data.stage)  # Фиксируем выбранный этап
-    state_data = await state.get_data()
-    answer: str = ...  # Тут будет вызов функции, которая будет формировать ответ для пользователя
-    await callback.message.edit_text(text=str(state_data))
+    if callback_data.stage: await state.update_data(stage_id=callback_data.stage)  # Фиксируем выбранный этап
+
+    state_data = await state.get_data()  # Получаем всю нужную информацию для формирования запроса
+    period = state_data.get('period')  # Информация по периоду фильтрации
+    stage_id = state_data.get('stage_id')  # id выбранного этапа
+    all_process_stages = state_data.get('all_process_stages', [])  # Все возможные этапы для выбранного процесса
+
+    # Получение нужного этапа
+    selected_stage = next((stage for stage in all_process_stages if stage.id == stage_id), None)
+    stage_info = await TransactionCollector(stages=[selected_stage], filtering_period=period).get_stages_info()
+    answer: str = MessageCreator(stages_info=stage_info).answer_text
+    await callback.message.edit_text(text=answer)
 
 
 def register_orchestrator_process_handlers(dp):
