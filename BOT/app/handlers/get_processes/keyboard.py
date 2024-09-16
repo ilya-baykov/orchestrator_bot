@@ -1,7 +1,6 @@
 import enum
 from abc import ABC, abstractmethod
 from typing import List, Optional, Any, Tuple, Type
-from aiogram import types
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
