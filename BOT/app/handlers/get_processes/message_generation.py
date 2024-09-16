@@ -5,7 +5,6 @@ from typing import List, Optional
 from app.handlers.get_processes.keyboard import CurrentPeriodOptions
 from database.OrchestratorJobs.crud import OrchestratorJobsCRUD
 from database.OrchestratorProcesses.crud import OrchestratorProcessesCRUD
-from database.OrchestratorQueues.crud import OrchestratorQueuesCRUD
 from database.OrchestratorTasks.crud import OrchestratorTasksCRUD
 from database.OrchestratorTasks.model import OrchestratorTasks
 from database.UserInput.model import UserInput
@@ -77,27 +76,24 @@ class TransactionCollector:
 
     async def _get_information_stage(self, stage: UserInput) -> Optional[OrchestratorFields]:
         process = await OrchestratorProcessesCRUD.find_one_or_none(guid=stage.subprocess_guid)  # Получаем процесс
+        if not process: return None
 
-        if process:
-            process_version_id = process.process_version_id  # Получаем версию процесса
-            job = await OrchestratorJobsCRUD.find_latest_by_process_version(process_version_id=process_version_id,
-                                                                            start_time=self.start_time,
-                                                                            end_time=self.end_time)
-            if job:
-                count_machine = await OrchestratorJobsCRUD.get_count_machine(process_version_id=process_version_id,
-                                                                             start_time=self.start_time,
-                                                                             end_time=self.end_time)
+        process_version_id = process.process_version_id  # Получаем версию процесса
+        job = await OrchestratorJobsCRUD.find_latest_by_process_version(process_version_id=process_version_id,
+                                                                        start_time=self.start_time,
+                                                                        end_time=self.end_time)
+        if not job: return None
+        count_machine = await OrchestratorJobsCRUD.get_count_machine(process_version_id=process_version_id,
+                                                                     start_time=self.start_time,
+                                                                     end_time=self.end_time)
 
-                queue = await OrchestratorQueuesCRUD.find_one_or_none(guid="58f47683-9b3e-43ad-8157-0507fa3fde47")
-
-                tasks = await OrchestratorTasksCRUD.find_by_queue_id_and_created(queue_id=queue.id,
-                                                                                 start_time=self.start_time,
-                                                                                 end_time=self.end_time)
-
-                stages_fields = OrchestratorFields(stage=stage, job_status=job.status, count_machine=count_machine,
-                                                   tasks=tasks)
-                return stages_fields
-        return None
+        tasks = await OrchestratorTasksCRUD.find_tasks_by_queue_guid_and_created(
+            queue_guid=stage.queue_guid,
+            start_time=datetime(2023, 1, 1),
+            end_time=(datetime(2024, 1, 1)))
+        stages_fields = OrchestratorFields(stage=stage, job_status=job.status, count_machine=count_machine,
+                                           tasks=tasks)
+        return stages_fields
 
     async def get_stages_info(self) -> List[OrchestratorFields]:
         """Возвращает сформированный список с информацией по этапам процесса"""
@@ -107,19 +103,19 @@ class TransactionCollector:
 class MessageCreator:
     """Класс для формирования ответа пользователю на команду /get_process_info """
 
-    def __init__(self, process_name: str, stages_info: List[OrchestratorFields]):
+    def __init__(self, stages_info: List[OrchestratorFields]):
         """
-        :param process_name: название процесса
         :param stages_info: Сформированный список с информацией по этапам процесса
         """
-        self.process_name = process_name
+
         self.stages_info = stages_info
         self._answer_text = self._create_answer_text()
 
     def _create_answer_text(self):
 
-        text = f"{self.process_name}\n"
+        text = ""
         if self.stages_info:
+            text += f"{self.stages_info[0].stage.process_name}\n"  # Название процесса
             text += f"Процесс выполняется на {5} машинах\n\n"
             for cnt, stage in enumerate(iterable=self.stages_info, start=1):
                 text += (f'{cnt}) {stage.stage.subprocess_name}'
