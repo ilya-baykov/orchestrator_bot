@@ -1,4 +1,6 @@
 from sqlalchemy import Column, BigInteger, Integer, String, Text, TIMESTAMP
+from sqlalchemy.orm import relationship
+
 from database.core import Base
 
 
@@ -24,6 +26,9 @@ class OrchestratorQueues(Base):
     auto_change_status = Column(Integer, nullable=False)  # Автоматическое изменение статуса
     auto_repeat_abandoned = Column(Integer, nullable=False)  # Автоматическое повторение заброшенных задач
     unique_tasks = Column(Integer, nullable=False)  # Уникальные задачи
+
+    # Определяем отношение
+    tasks = relationship('OrchestratorTasks', back_populates='queue')
 
     def __repr__(self):
         return (f"<OrchestratorQueues(id={self.id}, guid={self.guid}, name={self.name}, "

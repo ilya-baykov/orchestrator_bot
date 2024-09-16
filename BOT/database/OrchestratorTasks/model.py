@@ -1,4 +1,5 @@
-from sqlalchemy import Column, BigInteger, String, Text, Integer, TIMESTAMP
+from sqlalchemy import Column, BigInteger, String, Text, Integer, TIMESTAMP, ForeignKey
+from sqlalchemy.orm import relationship
 
 from database.core import Base
 
@@ -9,7 +10,7 @@ class OrchestratorTasks(Base):
 
     id = Column(BigInteger, primary_key=True)  # id записи в таблице
     guid = Column(String, nullable=True)  # GUID задачи
-    queue_id = Column(BigInteger, nullable=True)  # ID очереди
+    queue_id = Column(BigInteger, ForeignKey('orchestrator.queues.id'), nullable=True)  # ID очереди
     name = Column(String, nullable=True)  # Название задачи
     description = Column(Text, nullable=True)  # Описание задачи
     status = Column(Integer, nullable=True)  # Статус задачи
@@ -27,6 +28,9 @@ class OrchestratorTasks(Base):
     tags = Column(Text, nullable=True)  # Теги задачи
     retries = Column(BigInteger, nullable=False)  # Количество попыток
     parent_task = Column(String, nullable=True)  # ID родительской задачи
+
+    # Определяем обратное отношение
+    queue = relationship('OrchestratorQueues', back_populates='tasks')
 
     def __repr__(self):
         return f"<OrchestratorTasks(id={self.id}, guid={self.guid}, status={self.status})>"
