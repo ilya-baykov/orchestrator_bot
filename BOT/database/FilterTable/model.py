@@ -35,3 +35,6 @@ class FilterTable(Base):
             name='check_filtration_period'
         ),
     )
+
+    def __repr__(self):
+        return f"<FilterTable(id={self.id}, fk_id={self.fk_id}, filtration_period={self.filtration_period})>"
